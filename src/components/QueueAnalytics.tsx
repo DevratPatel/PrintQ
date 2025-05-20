@@ -1,15 +1,10 @@
-import { useQueue } from "@/hooks/useQueue";
-import { GlassCard } from "./ui/GlassCard";
-import { motion } from "framer-motion";
-import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { GlassCard } from "./ui/GlassCard";
 import type { QueueHistory } from "@/types/queue";
 
-export const AdminPanel = () => {
-  const { queue, resetQueue } = useQueue();
-  const [isResetting, setIsResetting] = useState(false);
+export const QueueAnalytics = () => {
   const [analytics, setAnalytics] = useState<{
     totalJobs: number;
     averageWaitTime: number;
@@ -77,47 +72,14 @@ export const AdminPanel = () => {
     fetchAnalytics();
   }, []);
 
-  const handleReset = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to reset the entire queue? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-    setIsResetting(true);
-    try {
-      const success = await resetQueue();
-      if (success) {
-        toast.success("Queue has been reset");
-      } else {
-        toast.error("Failed to reset queue");
-      }
-    } catch (error) {
-      toast.error("Failed to reset queue");
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
         <GlassCard className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-6">
-            Admin Queue Management
+            Queue Analytics
           </h1>
-          <div className="mb-6">
-            <button
-              onClick={handleReset}
-              disabled={isResetting}
-              className="w-full bg-red-500/40 hover:bg-red-500/60 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isResetting ? "Resetting..." : "Reset Queue"}
-            </button>
-          </div>
 
-          {/* Analytics Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <GlassCard className="bg-white/10">
               <h2 className="text-xl font-semibold text-white mb-4">
@@ -151,7 +113,7 @@ export const AdminPanel = () => {
             </GlassCard>
           </div>
 
-          <GlassCard className="bg-white/10 mb-8">
+          <GlassCard className="bg-white/10">
             <h2 className="text-xl font-semibold text-white mb-4">
               Daily Statistics
             </h2>
@@ -173,49 +135,6 @@ export const AdminPanel = () => {
                 ))}
             </div>
           </GlassCard>
-
-          <h2 className="text-xl font-semibold text-white mb-4">
-            Current Queue
-          </h2>
-          <div className="space-y-4">
-            {queue.map((entry) => (
-              <motion.div
-                key={entry.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white/10 rounded-lg p-4"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-xl font-bold text-white block">
-                      #{entry.queueNumber}
-                    </span>
-                    <p className="text-white/90">{entry.name}</p>
-                    <p className="text-white/70 text-sm">
-                      Student ID: {entry.studentId}
-                    </p>
-                    <p className="text-white/70 text-sm">
-                      Desk:{" "}
-                      {entry.desk
-                        ? entry.desk === "desk1"
-                          ? "Desk 1"
-                          : "Desk 2"
-                        : "Unassigned"}
-                    </p>
-                    <p className="text-white/70 text-sm">
-                      Status: {entry.status}
-                    </p>
-                  </div>
-                  <span className="text-white/50 text-sm">
-                    {Math.round((Date.now() - entry.timestamp) / 60000)} min ago
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-            {queue.length === 0 && (
-              <p className="text-white/70 text-center">No one in queue</p>
-            )}
-          </div>
         </GlassCard>
       </div>
     </div>

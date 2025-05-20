@@ -118,7 +118,7 @@ export const DeskPanel = ({ desk }: DeskPanelProps) => {
                 <button
                   onClick={handleReset}
                   disabled={isResetting}
-                  className="w-full bg-red-500/20 hover:bg-red-500/30 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-red-500/40 hover:bg-red-500/60 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isResetting ? "Resetting..." : "Reset Queue"}
                 </button>

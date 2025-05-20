@@ -10,9 +10,10 @@ import {
   getDocs,
   deleteDoc,
   where,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { QueueEntry, QueueStats } from "@/types/queue";
+import type { QueueEntry, QueueStats, QueueHistory } from "@/types/queue";
 
 export const useQueue = () => {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -48,7 +49,7 @@ export const useQueue = () => {
   const calculateAverageWaitTime = (completed: QueueEntry[]): number => {
     if (completed.length === 0) return 0;
     const totalWaitTime = completed.reduce((acc, entry) => {
-      return acc + (entry.estimatedWaitTime || 0);
+      return acc + (entry.waitTime || 0);
     }, 0);
     return Math.round(totalWaitTime / completed.length);
   };
@@ -79,10 +80,35 @@ export const useQueue = () => {
   const getWaitingQueue = () =>
     queue.filter((entry) => entry.status === "waiting" && entry.desk === null);
 
+  const saveToHistory = async (entry: QueueEntry) => {
+    if (!entry.completionTime || !entry.desk) return;
+
+    const historyEntry: QueueHistory = {
+      id: entry.id,
+      queueNumber: entry.queueNumber,
+      name: entry.name,
+      studentId: entry.studentId,
+      desk: entry.desk,
+      startTime: entry.timestamp,
+      completionTime: entry.completionTime,
+      waitTime: Math.round((entry.completionTime - entry.timestamp) / 60000), // Convert to minutes
+      serviceTime: Math.round((entry.completionTime - entry.timestamp) / 60000), // Convert to minutes
+      date: new Date(entry.completionTime).toISOString().split("T")[0], // YYYY-MM-DD format
+    };
+
+    await addDoc(collection(db, "queueHistory"), historyEntry);
+  };
+
   const callNextForDesk = async (desk: "desk1" | "desk2") => {
     const serving = getServingForDesk(desk);
     if (serving) {
-      await updateDoc(doc(db, "queue", serving.id), { status: "completed" });
+      const completionTime = Date.now();
+      await updateDoc(doc(db, "queue", serving.id), {
+        status: "completed",
+        completionTime,
+        waitTime: Math.round((completionTime - serving.timestamp) / 60000),
+      });
+      await saveToHistory({ ...serving, completionTime, status: "completed" });
     }
     const waiting = getWaitingQueue();
     if (waiting.length > 0) {
@@ -96,7 +122,13 @@ export const useQueue = () => {
   const completeServingForDesk = async (desk: "desk1" | "desk2") => {
     const serving = getServingForDesk(desk);
     if (serving) {
-      await updateDoc(doc(db, "queue", serving.id), { status: "completed" });
+      const completionTime = Date.now();
+      await updateDoc(doc(db, "queue", serving.id), {
+        status: "completed",
+        completionTime,
+        waitTime: Math.round((completionTime - serving.timestamp) / 60000),
+      });
+      await saveToHistory({ ...serving, completionTime, status: "completed" });
     }
   };
 
