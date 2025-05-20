@@ -1,39 +1,229 @@
 import { useQueue } from "@/hooks/useQueue";
 import { GlassCard } from "./ui/GlassCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  where,
+  Timestamp,
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { QueueHistory } from "@/types/queue";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+
+type DateRange = {
+  start: string;
+  end: string;
+};
+
+type EditModalProps = {
+  job: QueueHistory;
+  onClose: () => void;
+  onSave: (updatedJob: QueueHistory) => Promise<void>;
+};
+
+const EditModal = ({ job, onClose, onSave }: EditModalProps) => {
+  const [editedJob, setEditedJob] = useState<QueueHistory>(job);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(editedJob);
+      toast.success("Job updated successfully");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to update job");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNumberChange = (field: keyof QueueHistory, value: string) => {
+    const numValue = value === "" ? 0 : parseInt(value);
+    if (!isNaN(numValue)) {
+      setEditedJob((prev) => ({ ...prev, [field]: numValue }));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-gray-900 rounded-lg p-6 w-full max-w-md"
+      >
+        <h2 className="text-xl font-semibold text-white mb-4">
+          Edit Job Details
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Queue Number
+            </label>
+            <input
+              type="number"
+              value={editedJob.queueNumber || ""}
+              onChange={(e) =>
+                handleNumberChange("queueNumber", e.target.value)
+              }
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Name
+            </label>
+            <input
+              type="text"
+              value={editedJob.name}
+              onChange={(e) =>
+                setEditedJob((prev) => ({ ...prev, name: e.target.value }))
+              }
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Desk
+            </label>
+            <select
+              value={editedJob.desk}
+              onChange={(e) =>
+                setEditedJob((prev) => ({
+                  ...prev,
+                  desk: e.target.value as "desk1" | "desk2",
+                }))
+              }
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+            >
+              <option value="desk1">Desk 1</option>
+              <option value="desk2">Desk 2</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Wait Time (minutes)
+            </label>
+            <input
+              type="number"
+              value={editedJob.waitTime || ""}
+              onChange={(e) => handleNumberChange("waitTime", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-white mb-1">
+              Service Time (minutes)
+            </label>
+            <input
+              type="number"
+              value={editedJob.serviceTime || ""}
+              onChange={(e) =>
+                handleNumberChange("serviceTime", e.target.value)
+              }
+              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-4 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            {isSaving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 export const AdminPanel = () => {
   const { queue, resetQueue } = useQueue();
   const [isResetting, setIsResetting] = useState(false);
+  const [editingJob, setEditingJob] = useState<QueueHistory | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end: new Date().toISOString().split("T")[0],
+  });
+  const [pastJobs, setPastJobs] = useState<QueueHistory[]>([]);
   const [analytics, setAnalytics] = useState<{
     totalJobs: number;
     averageWaitTime: number;
     averageServiceTime: number;
     jobsByDesk: { desk1: number; desk2: number };
-    dailyStats: { [key: string]: { count: number; avgWait: number } };
+    dailyStats: {
+      [key: string]: { count: number; avgWait: number; avgService: number };
+    };
+    hourlyStats: { [key: string]: { count: number; avgWait: number } };
+    peakHours: { hour: string; count: number }[];
+    longestWait: { name: string; waitTime: number; date: string };
+    busiestDay: { date: string; count: number };
   }>({
     totalJobs: 0,
     averageWaitTime: 0,
     averageServiceTime: 0,
     jobsByDesk: { desk1: 0, desk2: 0 },
     dailyStats: {},
+    hourlyStats: {},
+    peakHours: [],
+    longestWait: { name: "", waitTime: 0, date: "" },
+    busiestDay: { date: "", count: 0 },
   });
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      const historyRef = collection(db, "queueHistory");
-      const q = query(historyRef, orderBy("completionTime", "desc"));
-      const snapshot = await getDocs(q);
+  const fetchAnalytics = async () => {
+    const historyRef = collection(db, "queueHistory");
+    let q = query(
+      historyRef,
+      where("completionTime", ">=", new Date(dateRange.start).getTime()),
+      where(
+        "completionTime",
+        "<=",
+        new Date(dateRange.end).getTime() + 24 * 60 * 60 * 1000
+      ),
+      orderBy("completionTime", "desc")
+    );
 
+    try {
+      const snapshot = await getDocs(q);
       const history: QueueHistory[] = [];
       snapshot.forEach((doc) => {
-        history.push({ id: doc.id, ...doc.data() } as QueueHistory);
+        const data = doc.data();
+        history.push({
+          id: doc.id,
+          queueNumber: data.queueNumber,
+          name: data.name,
+          studentId: data.studentId,
+          desk: data.desk,
+          startTime: data.startTime,
+          completionTime: data.completionTime,
+          waitTime: data.waitTime,
+          serviceTime: data.serviceTime,
+          date: data.date,
+        });
       });
+
+      // Set past jobs
+      setPastJobs(history);
 
       // Calculate statistics
       const totalJobs = history.length;
@@ -48,22 +238,71 @@ export const AdminPanel = () => {
       };
 
       // Calculate daily statistics
-      const dailyStats: { [key: string]: { count: number; avgWait: number } } =
+      const dailyStats: {
+        [key: string]: { count: number; avgWait: number; avgService: number };
+      } = {};
+      const hourlyStats: { [key: string]: { count: number; avgWait: number } } =
         {};
+
       history.forEach((job) => {
-        if (!dailyStats[job.date]) {
-          dailyStats[job.date] = { count: 0, avgWait: 0 };
+        const date = new Date(job.completionTime).toISOString().split("T")[0];
+        const hour =
+          new Date(job.completionTime).getHours().toString().padStart(2, "0") +
+          ":00";
+
+        // Daily stats
+        if (!dailyStats[date]) {
+          dailyStats[date] = { count: 0, avgWait: 0, avgService: 0 };
         }
-        dailyStats[job.date].count++;
-        dailyStats[job.date].avgWait += job.waitTime;
+        dailyStats[date].count++;
+        dailyStats[date].avgWait += job.waitTime;
+        dailyStats[date].avgService += job.serviceTime;
+
+        // Hourly stats
+        if (!hourlyStats[hour]) {
+          hourlyStats[hour] = { count: 0, avgWait: 0 };
+        }
+        hourlyStats[hour].count++;
+        hourlyStats[hour].avgWait += job.waitTime;
       });
 
-      // Calculate averages for each day
+      // Calculate averages and find peak hours
       Object.keys(dailyStats).forEach((date) => {
         dailyStats[date].avgWait = Math.round(
           dailyStats[date].avgWait / dailyStats[date].count
         );
+        dailyStats[date].avgService = Math.round(
+          dailyStats[date].avgService / dailyStats[date].count
+        );
       });
+
+      Object.keys(hourlyStats).forEach((hour) => {
+        hourlyStats[hour].avgWait = Math.round(
+          hourlyStats[hour].avgWait / hourlyStats[hour].count
+        );
+      });
+
+      // Find peak hours
+      const peakHours = Object.entries(hourlyStats)
+        .map(([hour, stats]) => ({ hour, count: stats.count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Find longest wait
+      const longestWait = history.reduce(
+        (max, job) =>
+          job.waitTime > max.waitTime
+            ? { name: job.name, waitTime: job.waitTime, date: job.date }
+            : max,
+        { name: "", waitTime: 0, date: "" }
+      );
+
+      // Find busiest day
+      const busiestDay = Object.entries(dailyStats).reduce(
+        (max, [date, stats]) =>
+          stats.count > max.count ? { date, count: stats.count } : max,
+        { date: "", count: 0 }
+      );
 
       setAnalytics({
         totalJobs,
@@ -71,11 +310,20 @@ export const AdminPanel = () => {
         averageServiceTime: Math.round(totalServiceTime / totalJobs) || 0,
         jobsByDesk,
         dailyStats,
+        hourlyStats,
+        peakHours,
+        longestWait,
+        busiestDay,
       });
-    };
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      toast.error("Failed to fetch job history");
+    }
+  };
 
+  useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [dateRange]);
 
   const handleReset = async () => {
     if (
@@ -100,124 +348,365 @@ export const AdminPanel = () => {
     }
   };
 
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const handleEditJob = async (updatedJob: QueueHistory) => {
+    if (!updatedJob.id) {
+      toast.error("Invalid job ID");
+      return;
+    }
+
+    try {
+      const jobRef = doc(db, "queueHistory", updatedJob.id);
+
+      // First check if the document exists
+      const docSnap = await getDoc(jobRef);
+      if (!docSnap.exists()) {
+        toast.error("Job not found in database");
+        return;
+      }
+
+      const jobData = {
+        queueNumber: updatedJob.queueNumber,
+        name: updatedJob.name,
+        desk: updatedJob.desk,
+        waitTime: updatedJob.waitTime,
+        serviceTime: updatedJob.serviceTime,
+        completionTime: updatedJob.completionTime,
+        date: updatedJob.date,
+        studentId: updatedJob.studentId,
+        startTime: updatedJob.startTime,
+      };
+
+      await updateDoc(jobRef, jobData);
+
+      // Update local state
+      setPastJobs((prev) =>
+        prev.map((job) =>
+          job.id === updatedJob.id ? { ...job, ...jobData } : job
+        )
+      );
+
+      // Refresh analytics
+      fetchAnalytics();
+      toast.success("Job updated successfully");
+    } catch (error) {
+      console.error("Error updating job:", error);
+      toast.error("Failed to update job. Please try again.");
+      throw error;
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    if (!jobId) {
+      toast.error("Invalid job ID");
+      return;
+    }
+
+    if (
+      !confirm(
+        "Are you sure you want to delete this job? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const jobRef = doc(db, "queueHistory", jobId);
+      await deleteDoc(jobRef);
+
+      // Update local state
+      setPastJobs((prev) => prev.filter((job) => job.id !== jobId));
+
+      // Refresh analytics
+      fetchAnalytics();
+
+      toast.success("Job deleted successfully");
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      toast.error("Failed to delete job");
+    }
+  };
+
   return (
     <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <GlassCard className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-6">
-            Admin Queue Management
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Admin Dashboard
           </h1>
-          <div className="mb-6">
-            <button
-              onClick={handleReset}
-              disabled={isResetting}
-              className="w-full bg-red-500/40 hover:bg-red-500/60 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isResetting ? "Resetting..." : "Reset Queue"}
-            </button>
-          </div>
-
-          {/* Analytics Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <GlassCard className="bg-white/5">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Overall Statistics
-              </h2>
-              <div className="space-y-2">
-                <p className="text-white/90">
-                  Total Jobs: {analytics.totalJobs}
-                </p>
-                <p className="text-white/90">
-                  Average Wait Time: {analytics.averageWaitTime} minutes
-                </p>
-                <p className="text-white/90">
-                  Average Service Time: {analytics.averageServiceTime} minutes
-                </p>
-              </div>
-            </GlassCard>
-
-            <GlassCard className="bg-white/5">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Jobs by Desk
-              </h2>
-              <div className="space-y-2">
-                <p className="text-white/90">
-                  Desk 1: {analytics.jobsByDesk.desk1} jobs
-                </p>
-                <p className="text-white/90">
-                  Desk 2: {analytics.jobsByDesk.desk2} jobs
-                </p>
-              </div>
-            </GlassCard>
-          </div>
-
-          <GlassCard className="bg-white/5 mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Daily Statistics
-            </h2>
-            <div className="space-y-4">
-              {Object.entries(analytics.dailyStats)
-                .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-                .map(([date, stats]) => (
-                  <div key={date} className="bg-white/10 rounded-lg p-4">
-                    <h3 className="text-lg font-bold text-white mb-2">
-                      {date}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <p className="text-white/90">Total Jobs: {stats.count}</p>
-                      <p className="text-white/90">
-                        Average Wait: {stats.avgWait} minutes
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, start: e.target.value }))
+                }
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+              />
             </div>
-          </GlassCard>
-
-          <h2 className="text-xl font-semibold text-white mb-4">
-            Current Queue
-          </h2>
-          <div className="space-y-4">
-            {queue.map((entry) => (
-              <motion.div
-                key={entry.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white/10 rounded-lg p-4"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-xl font-bold text-white block">
-                      #{entry.queueNumber}
-                    </span>
-                    <p className="text-white/90">{entry.name}</p>
-                    <p className="text-white/70 text-sm">
-                      Student ID: {entry.studentId}
-                    </p>
-                    <p className="text-white/70 text-sm">
-                      Desk:{" "}
-                      {entry.desk
-                        ? entry.desk === "desk1"
-                          ? "Desk 1"
-                          : "Desk 2"
-                        : "Unassigned"}
-                    </p>
-                    <p className="text-white/70 text-sm">
-                      Status: {entry.status}
-                    </p>
-                  </div>
-                  <span className="text-white/50 text-sm">
-                    {Math.round((Date.now() - entry.timestamp) / 60000)} min ago
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-            {queue.length === 0 && (
-              <p className="text-white/70 text-center">No one in queue</p>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) =>
+                  setDateRange((prev) => ({ ...prev, end: e.target.value }))
+                }
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+              />
+            </div>
           </div>
-        </GlassCard>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Current Queue */}
+          <div className="lg:col-span-1">
+            <GlassCard className="h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-white">
+                  Current Queue
+                </h2>
+                <button
+                  onClick={handleReset}
+                  disabled={isResetting}
+                  className="bg-red-500/40 hover:bg-red-500/60 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResetting ? "Resetting..." : "Reset Queue"}
+                </button>
+              </div>
+              <div className="space-y-4">
+                {queue.map((entry) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="bg-white/10 rounded-lg p-4"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-xl font-bold text-white block">
+                          #{entry.queueNumber}
+                        </span>
+                        <p className="text-white/90">{entry.name}</p>
+                        <p className="text-white/70 text-sm">
+                          Student ID: {entry.studentId}
+                        </p>
+                        <p className="text-white/70 text-sm">
+                          Desk:{" "}
+                          {entry.desk
+                            ? entry.desk === "desk1"
+                              ? "Desk 1"
+                              : "Desk 2"
+                            : "Unassigned"}
+                        </p>
+                        <p className="text-white/70 text-sm">
+                          Status: {entry.status}
+                        </p>
+                      </div>
+                      <span className="text-white/50 text-sm">
+                        {Math.round((Date.now() - entry.timestamp) / 60000)} min
+                        ago
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+                {queue.length === 0 && (
+                  <p className="text-white/70 text-center">No one in queue</p>
+                )}
+              </div>
+            </GlassCard>
+          </div>
+
+          {/* Right Column - Analytics and History */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <GlassCard className="bg-white/5">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Total Jobs
+                </h3>
+                <p className="text-3xl font-bold text-white">
+                  {analytics.totalJobs}
+                </p>
+              </GlassCard>
+              <GlassCard className="bg-white/5">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Avg Wait Time
+                </h3>
+                <p className="text-3xl font-bold text-white">
+                  {analytics.averageWaitTime}m
+                </p>
+              </GlassCard>
+              <GlassCard className="bg-white/5">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Avg Service Time
+                </h3>
+                <p className="text-3xl font-bold text-white">
+                  {analytics.averageServiceTime}m
+                </p>
+              </GlassCard>
+              <GlassCard className="bg-white/5">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Busiest Day
+                </h3>
+                <p className="text-xl font-bold text-white">
+                  {analytics.busiestDay.date}
+                </p>
+                <p className="text-white/70">
+                  {analytics.busiestDay.count} jobs
+                </p>
+              </GlassCard>
+            </div>
+
+            {/* Detailed Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <GlassCard className="bg-white/5">
+                <h2 className="text-xl font-semibold text-white mb-4">
+                  Jobs by Desk
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/90">Desk 1</span>
+                    <span className="text-white font-bold">
+                      {analytics.jobsByDesk.desk1} jobs
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/90">Desk 2</span>
+                    <span className="text-white font-bold">
+                      {analytics.jobsByDesk.desk2} jobs
+                    </span>
+                  </div>
+                </div>
+              </GlassCard>
+
+              <GlassCard className="bg-white/5">
+                <h2 className="text-xl font-semibold text-white mb-4">
+                  Peak Hours
+                </h2>
+                <div className="space-y-2">
+                  {analytics.peakHours.map(({ hour, count }) => (
+                    <div
+                      key={hour}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-white/90">{hour}</span>
+                      <span className="text-white font-bold">{count} jobs</span>
+                    </div>
+                  ))}
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Past Jobs */}
+            <GlassCard className="bg-white/5">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Past Jobs
+              </h2>
+              <div className="space-y-4">
+                {pastJobs.map((job) => (
+                  <motion.div
+                    key={job.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/10 rounded-lg p-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4">
+                      <div>
+                        <p className="text-white/70 text-sm">Queue Number</p>
+                        <p className="text-white font-bold">
+                          #{job.queueNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/70 text-sm">Name</p>
+                        <p className="text-white font-bold">{job.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/70 text-sm">Time</p>
+                        <p className="text-white font-bold">
+                          {formatTime(job.completionTime)}
+                        </p>
+                        <p className="text-white/90 text-sm">
+                          {formatDate(job.completionTime)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/70 text-sm">Details</p>
+                        <div className="flex flex-col">
+                          <p className="text-white font-bold">
+                            Desk {job.desk === "desk1" ? "1" : "2"}
+                          </p>
+                          <p className="text-white/90 text-sm">
+                            Wait: {job.waitTime}m
+                          </p>
+                          <p className="text-white/90 text-sm">
+                            Service: {job.serviceTime}m
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 justify-center">
+                        <button
+                          onClick={() => setEditingJob(job)}
+                          className="flex items-center justify-center w-10 h-10 rounded bg-blue-500/40 hover:bg-blue-500/60 text-white transition-colors"
+                          title="Edit"
+                        >
+                          <FiEdit2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteJob(job.id)}
+                          className="flex items-center justify-center w-10 h-10 rounded bg-red-500/40 hover:bg-red-500/60 text-white transition-colors"
+                          title="Delete"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+                {pastJobs.length === 0 && (
+                  <p className="text-white/70 text-center">
+                    No past jobs found for the selected date range
+                  </p>
+                )}
+              </div>
+            </GlassCard>
+          </div>
+        </div>
       </div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingJob && (
+          <EditModal
+            job={editingJob}
+            onClose={() => setEditingJob(null)}
+            onSave={handleEditJob}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
