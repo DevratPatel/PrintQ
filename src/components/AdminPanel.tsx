@@ -119,7 +119,7 @@ export const AdminPanel = () => {
 
           {/* Analytics Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <GlassCard className="bg-white/10">
+            <GlassCard className="bg-white/5">
               <h2 className="text-xl font-semibold text-white mb-4">
                 Overall Statistics
               </h2>
@@ -136,7 +136,7 @@ export const AdminPanel = () => {
               </div>
             </GlassCard>
 
-            <GlassCard className="bg-white/10">
+            <GlassCard className="bg-white/5">
               <h2 className="text-xl font-semibold text-white mb-4">
                 Jobs by Desk
               </h2>
@@ -151,7 +151,7 @@ export const AdminPanel = () => {
             </GlassCard>
           </div>
 
-          <GlassCard className="bg-white/10 mb-8">
+          <GlassCard className="bg-white/5 mb-8">
             <h2 className="text-xl font-semibold text-white mb-4">
               Daily Statistics
             </h2>
@@ -159,8 +159,8 @@ export const AdminPanel = () => {
               {Object.entries(analytics.dailyStats)
                 .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
                 .map(([date, stats]) => (
-                  <div key={date} className="bg-white/5 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-white mb-2">
+                  <div key={date} className="bg-white/10 rounded-lg p-4">
+                    <h3 className="text-lg font-bold text-white mb-2">
                       {date}
                     </h3>
                     <div className="grid grid-cols-2 gap-4">

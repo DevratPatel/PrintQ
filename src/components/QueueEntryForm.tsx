@@ -41,7 +41,7 @@ export const QueueEntryForm = () => {
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-white/30"
             placeholder="Enter your name"
           />
         </div>
@@ -57,8 +57,8 @@ export const QueueEntryForm = () => {
             id="studentId"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/20"
-            placeholder="Enter your student ID"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-1 focus:ring-white/30"
+            placeholder="Enter your Student ID"
           />
         </div>
         <button

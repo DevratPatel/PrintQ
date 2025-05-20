@@ -11,7 +11,7 @@ export const GlassCard = ({ children, className = "" }: GlassCardProps) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`backdrop-blur-lg bg-white/10 rounded-xl border border-white/20 shadow-xl p-6 ${className}`}
+      className={`backdrop-blur-lg bg-white/5 rounded-xl border border-white/5 shadow-xl p-6 ${className}`}
     >
       {children}
     </motion.div>
