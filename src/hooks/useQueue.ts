@@ -11,6 +11,7 @@ import {
   deleteDoc,
   where,
   Timestamp,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { QueueEntry, QueueStats, QueueHistory } from "@/types/queue";
@@ -55,17 +56,32 @@ export const useQueue = () => {
   };
 
   const addToQueue = async (name: string, studentId: string) => {
-    const lastEntry = queue[queue.length - 1];
-    const nextNumber = lastEntry ? lastEntry.queueNumber + 1 : 1;
-    await addDoc(collection(db, "queue"), {
-      queueNumber: nextNumber,
-      name,
-      studentId,
-      status: "waiting",
-      desk: null,
-      timestamp: Date.now(),
-      estimatedWaitTime: calculateEstimatedWaitTime(),
-    });
+    try {
+      const queueRef = collection(db, "queue");
+      const q = query(queueRef, orderBy("timestamp", "desc"), limit(1));
+      const snapshot = await getDocs(q);
+      let nextNumber = 1;
+
+      if (!snapshot.empty) {
+        const lastEntry = snapshot.docs[0].data();
+        nextNumber = lastEntry.queueNumber + 1;
+      }
+
+      const newEntry = {
+        name,
+        studentId,
+        queueNumber: nextNumber,
+        timestamp: Date.now(),
+        status: "waiting",
+        desk: null,
+      };
+
+      await addDoc(queueRef, newEntry);
+      return nextNumber;
+    } catch (error) {
+      console.error("Error adding to queue:", error);
+      throw error;
+    }
   };
 
   const calculateEstimatedWaitTime = (): number => {
@@ -145,6 +161,16 @@ export const useQueue = () => {
     }
   };
 
+  const deleteFromQueue = async (entryId: string) => {
+    try {
+      await deleteDoc(doc(db, "queue", entryId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting from queue:", error);
+      return false;
+    }
+  };
+
   return {
     queue,
     stats,
@@ -154,5 +180,6 @@ export const useQueue = () => {
     callNextForDesk,
     completeServingForDesk,
     resetQueue,
+    deleteFromQueue,
   };
 };

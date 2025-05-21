@@ -82,7 +82,7 @@ export const DeskPanel = ({ desk }: DeskPanelProps) => {
                 Current Status
               </h2>
               {serving ? (
-                <GlassCard className="bg-white/20">
+                <GlassCard className="bg-white/5">
                   <p className="text-white/90 mb-2">Now Serving:</p>
                   <p className="text-2xl font-bold text-white mb-2">
                     #{serving.queueNumber}
@@ -130,6 +130,7 @@ export const DeskPanel = ({ desk }: DeskPanelProps) => {
           <h2 className="text-xl font-semibold text-white mb-4">
             Waiting Queue
           </h2>
+
           <div className="space-y-4">
             {waiting.map((entry) => (
               <motion.div

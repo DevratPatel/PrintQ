@@ -2,10 +2,12 @@ import { useState } from "react";
 import { GlassCard } from "./ui/GlassCard";
 import { useQueue } from "@/hooks/useQueue";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const QueueEntryForm = () => {
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [assignedNumber, setAssignedNumber] = useState<number | null>(null);
   const { addToQueue, stats } = useQueue();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,8 +18,9 @@ export const QueueEntryForm = () => {
     }
 
     try {
-      await addToQueue(name, studentId);
-      toast.success("Added to queue successfully!");
+      const queueNumber = await addToQueue(name, studentId);
+      setAssignedNumber(queueNumber);
+      toast.success(`Your queue number is #${queueNumber}`);
       setName("");
       setStudentId("");
     } catch (error) {
@@ -72,6 +75,28 @@ export const QueueEntryForm = () => {
         <p>Current queue length: {stats.currentQueueLength}</p>
         <p>Estimated wait time: {stats.averageWaitTime} minutes</p>
       </div>
+
+      <AnimatePresence>
+        {assignedNumber && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mt-6 p-4 bg-white/10 rounded-lg"
+          >
+            <h3 className="text-lg font-semibold text-white text-center mb-2">
+              Your Queue Number
+            </h3>
+            <p className="text-3xl font-bold text-white text-center">
+              #{assignedNumber}
+            </p>
+            <p className="text-white/70 text-sm text-center mt-2">
+              Please remember this number. You will be called when it's your
+              turn.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </GlassCard>
   );
 };

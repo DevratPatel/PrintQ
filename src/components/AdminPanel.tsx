@@ -17,7 +17,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { QueueHistory } from "@/types/queue";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiTrash2,
+  FiArrowUp,
+  FiArrowDown,
+  FiArrowLeft,
+  FiArrowRight,
+} from "react-icons/fi";
 
 type DateRange = {
   start: string;
@@ -155,8 +162,66 @@ const EditModal = ({ job, onClose, onSave }: EditModalProps) => {
   );
 };
 
+// Pagination component
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+  const pageNumbers = [];
+  let start = Math.max(0, currentPage - 1);
+  let end = Math.min(totalPages - 1, currentPage + 1);
+  if (currentPage === 0) end = Math.min(2, totalPages - 1);
+  if (currentPage === totalPages - 1) start = Math.max(0, totalPages - 3);
+  for (let i = start; i <= end; i++) pageNumbers.push(i);
+  return (
+    <div className="flex items-center gap-1 select-none">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 0}
+        className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        title="Previous page"
+      >
+        <FiArrowLeft className="w-4 h-4" />
+      </button>
+      {start > 0 && <span className="px-1 text-white/60">1</span>}
+      {start > 1 && <span className="px-1 text-white/60">...</span>}
+      {pageNumbers.map((num) => (
+        <button
+          key={num}
+          onClick={() => onPageChange(num)}
+          className={`px-2 py-1 rounded ${
+            num === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          {num + 1}
+        </button>
+      ))}
+      {end < totalPages - 2 && <span className="px-1 text-white/60">...</span>}
+      {end < totalPages - 1 && (
+        <span className="px-1 text-white/60">{totalPages}</span>
+      )}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages - 1}
+        className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        title="Next page"
+      >
+        <FiArrowRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
 export const AdminPanel = () => {
-  const { queue, resetQueue } = useQueue();
+  const { queue, deleteFromQueue, resetQueue } = useQueue();
   const [isResetting, setIsResetting] = useState(false);
   const [editingJob, setEditingJob] = useState<QueueHistory | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -189,6 +254,21 @@ export const AdminPanel = () => {
     longestWait: { name: "", waitTime: 0, date: "" },
     busiestDay: { date: "", count: 0 },
   });
+  const [currentQueuePage, setCurrentQueuePage] = useState(0);
+  const [recentJobsPage, setRecentJobsPage] = useState(0);
+  const jobsPerPage = 10;
+
+  // Current Queue Pagination
+  const currentQueueTotalPages = Math.ceil(queue.length / jobsPerPage);
+  const currentQueueStart = currentQueuePage * jobsPerPage;
+  const currentQueueEnd = currentQueueStart + jobsPerPage;
+  const currentQueueJobs = queue.slice(currentQueueStart, currentQueueEnd);
+
+  // Recent Jobs Pagination
+  const recentJobsTotalPages = Math.ceil(pastJobs.length / jobsPerPage);
+  const recentJobsStart = recentJobsPage * jobsPerPage;
+  const recentJobsEnd = recentJobsStart + jobsPerPage;
+  const recentJobs = pastJobs.slice(recentJobsStart, recentJobsEnd);
 
   const fetchAnalytics = async () => {
     const historyRef = collection(db, "queueHistory");
@@ -411,34 +491,17 @@ export const AdminPanel = () => {
     }
   };
 
-  const handleDeleteJob = async (jobId: string) => {
-    if (!jobId) {
-      toast.error("Invalid job ID");
-      return;
-    }
-
+  const handleDelete = async (entryId: string) => {
     if (
-      !confirm(
-        "Are you sure you want to delete this job? This action cannot be undone."
-      )
+      !confirm("Are you sure you want to remove this person from the queue?")
     ) {
       return;
     }
-
-    try {
-      const jobRef = doc(db, "queueHistory", jobId);
-      await deleteDoc(jobRef);
-
-      // Update local state
-      setPastJobs((prev) => prev.filter((job) => job.id !== jobId));
-
-      // Refresh analytics
-      fetchAnalytics();
-
-      toast.success("Job deleted successfully");
-    } catch (error) {
-      console.error("Error deleting job:", error);
-      toast.error("Failed to delete job");
+    const success = await deleteFromQueue(entryId);
+    if (success) {
+      toast.success("Removed from queue");
+    } else {
+      toast.error("Failed to remove from queue");
     }
   };
 
@@ -484,7 +547,7 @@ export const AdminPanel = () => {
           {/* Left Column - Current Queue */}
           <div className="lg:col-span-1">
             <GlassCard className="h-full">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-white">
                   Current Queue
                 </h2>
@@ -496,8 +559,15 @@ export const AdminPanel = () => {
                   {isResetting ? "Resetting..." : "Reset Queue"}
                 </button>
               </div>
+              <div className="flex justify-center mb-4">
+                <Pagination
+                  currentPage={currentQueuePage}
+                  totalPages={currentQueueTotalPages}
+                  onPageChange={setCurrentQueuePage}
+                />
+              </div>
               <div className="space-y-4">
-                {queue.map((entry) => (
+                {currentQueueJobs.map((entry) => (
                   <motion.div
                     key={entry.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -525,10 +595,19 @@ export const AdminPanel = () => {
                           Status: {entry.status}
                         </p>
                       </div>
-                      <span className="text-white/50 text-sm">
-                        {Math.round((Date.now() - entry.timestamp) / 60000)} min
-                        ago
-                      </span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="text-white/50 text-sm">
+                          {Math.round((Date.now() - entry.timestamp) / 60000)}{" "}
+                          min ago
+                        </span>
+                        <button
+                          onClick={() => handleDelete(entry.id)}
+                          className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                          title="Remove from queue"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -622,11 +701,18 @@ export const AdminPanel = () => {
 
             {/* Past Jobs */}
             <GlassCard className="bg-white/5">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Past Jobs
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-white">
+                  Recent Jobs
+                </h2>
+                <Pagination
+                  currentPage={recentJobsPage}
+                  totalPages={recentJobsTotalPages}
+                  onPageChange={setRecentJobsPage}
+                />
+              </div>
               <div className="space-y-4">
-                {pastJobs.map((job) => (
+                {recentJobs.map((job) => (
                   <motion.div
                     key={job.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -676,7 +762,7 @@ export const AdminPanel = () => {
                           <FiEdit2 className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteJob(job.id)}
+                          onClick={() => handleDelete(job.id)}
                           className="flex items-center justify-center w-10 h-10 rounded bg-red-500/40 hover:bg-red-500/60 text-white transition-colors"
                           title="Delete"
                         >
