@@ -1,15 +1,25 @@
 # Poster Queue Management System
 
-A modern web application for managing poster printing queues with a beautiful glassmorphism UI.
+A modern web application for managing poster printing queues with a beautiful glassmorphism UI and advanced admin/desk features.
 
 ## Features
 
 - Real-time queue management
 - Beautiful glassmorphism UI
-- Admin panel for staff
+- **Advanced pagination** in all panels (Admin, Desk1, Desk2) with clickable page numbers and ellipsis navigation
+- Admin panel for staff with:
+  - Edit and delete jobs (with modal and confirmation)
+  - Date range filtering for analytics and job history
+  - Quick stats, analytics, and job history
+- Desk panels (Desk1, Desk2, DeskPanel) with:
+  - Paginated waiting queue and serving view
+  - Call next, complete, and delete actions
 - TV display for customers
 - Estimated wait times
 - Responsive design
+- **Queue number is shown to users after joining the queue**
+- Shared Pagination component for consistent UX
+- Smooth animations and notifications
 
 ## Tech Stack
 
@@ -18,6 +28,7 @@ A modern web application for managing poster printing queues with a beautiful gl
 - Animations: Framer Motion
 - Database: Firebase Firestore
 - Notifications: React Hot Toast
+- Icons: React Icons
 
 ## Getting Started
 
@@ -51,8 +62,9 @@ A modern web application for managing poster printing queues with a beautiful gl
 
 ## Pages
 
-- `/` - Queue entry form for customers
-- `/admin` - Admin panel for staff
+- `/` - Queue entry form for customers (shows assigned queue number after joining)
+- `/admin` - Admin panel for staff (edit/delete jobs, analytics, paginated queue and job history)
+- `/desk1` and `/desk2` - Desk panels for staff (serving, paginated waiting queue, call/complete/delete)
 - `/display` - TV display for showing queue status
 
 ## Development
@@ -64,6 +76,8 @@ The project uses:
 - Framer Motion for animations
 - React Hot Toast for notifications
 - Firebase for real-time database
+- React Icons for UI icons
+- Shared Pagination component for all paginated lists
 
 ## Deployment
 

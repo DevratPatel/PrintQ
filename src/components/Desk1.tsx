@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { FiTrash2, FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import { useState } from "react";
 
-// Pagination component (copy from AdminPanel)
+// Pagination component (same as AdminPanel, with clickable first/last page numbers)
 const Pagination = ({
   currentPage,
   totalPages,
@@ -32,7 +32,18 @@ const Pagination = ({
       >
         <FiArrowLeft className="w-4 h-4" />
       </button>
-      {start > 0 && <span className="px-1 text-white/60">1</span>}
+      {start > 0 && (
+        <button
+          onClick={() => onPageChange(0)}
+          className={`px-2 py-1 rounded ${
+            0 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          1
+        </button>
+      )}
       {start > 1 && <span className="px-1 text-white/60">...</span>}
       {pageNumbers.map((num) => (
         <button
@@ -49,7 +60,16 @@ const Pagination = ({
       ))}
       {end < totalPages - 2 && <span className="px-1 text-white/60">...</span>}
       {end < totalPages - 1 && (
-        <span className="px-1 text-white/60">{totalPages}</span>
+        <button
+          onClick={() => onPageChange(totalPages - 1)}
+          className={`px-2 py-1 rounded ${
+            totalPages - 1 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          {totalPages}
+        </button>
       )}
       <button
         onClick={() => onPageChange(currentPage + 1)}
@@ -144,50 +164,6 @@ export const Desk1 = () => {
             </div>
 
             {/* Waiting Queue */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                Waiting Queue
-              </h3>
-              <div className="flex justify-center mb-2">
-                <Pagination
-                  currentPage={waitingPage}
-                  totalPages={totalPages}
-                  onPageChange={setWaitingPage}
-                />
-              </div>
-              <div className="space-y-4">
-                {waitingPageEntries.map((entry) => (
-                  <motion.div
-                    key={entry.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-white/10 rounded-lg p-4"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-xl font-bold text-white">
-                          #{entry.queueNumber}
-                        </p>
-                        <p className="text-white/90">{entry.name}</p>
-                        <p className="text-white/70 text-sm">
-                          Student ID: {entry.studentId}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                        title="Remove from queue"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-                {waiting.length === 0 && (
-                  <p className="text-white/70">No one in waiting queue</p>
-                )}
-              </div>
-            </div>
 
             {/* Call Next Button */}
             <button

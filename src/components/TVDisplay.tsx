@@ -6,7 +6,7 @@ export const TVDisplay = () => {
   const { getServingForDesk, getWaitingQueue } = useQueue();
   const serving1 = getServingForDesk("desk1");
   const serving2 = getServingForDesk("desk2");
-  const waiting = getWaitingQueue().slice(0, 5);
+  const waiting = getWaitingQueue().slice(0, 10);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

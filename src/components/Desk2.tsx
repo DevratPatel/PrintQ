@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { FiTrash2, FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import { useState } from "react";
 
-// Pagination component (copy from AdminPanel)
+// Pagination component (same as AdminPanel, with clickable first/last page numbers)
 const Pagination = ({
   currentPage,
   totalPages,
@@ -32,7 +32,18 @@ const Pagination = ({
       >
         <FiArrowLeft className="w-4 h-4" />
       </button>
-      {start > 0 && <span className="px-1 text-white/60">1</span>}
+      {start > 0 && (
+        <button
+          onClick={() => onPageChange(0)}
+          className={`px-2 py-1 rounded ${
+            0 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          1
+        </button>
+      )}
       {start > 1 && <span className="px-1 text-white/60">...</span>}
       {pageNumbers.map((num) => (
         <button
@@ -49,7 +60,16 @@ const Pagination = ({
       ))}
       {end < totalPages - 2 && <span className="px-1 text-white/60">...</span>}
       {end < totalPages - 1 && (
-        <span className="px-1 text-white/60">{totalPages}</span>
+        <button
+          onClick={() => onPageChange(totalPages - 1)}
+          className={`px-2 py-1 rounded ${
+            totalPages - 1 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          {totalPages}
+        </button>
       )}
       <button
         onClick={() => onPageChange(currentPage + 1)}

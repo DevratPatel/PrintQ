@@ -189,7 +189,18 @@ const Pagination = ({
       >
         <FiArrowLeft className="w-4 h-4" />
       </button>
-      {start > 0 && <span className="px-1 text-white/60">1</span>}
+      {start > 0 && (
+        <button
+          onClick={() => onPageChange(0)}
+          className={`px-2 py-1 rounded ${
+            0 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          1
+        </button>
+      )}
       {start > 1 && <span className="px-1 text-white/60">...</span>}
       {pageNumbers.map((num) => (
         <button
@@ -206,7 +217,16 @@ const Pagination = ({
       ))}
       {end < totalPages - 2 && <span className="px-1 text-white/60">...</span>}
       {end < totalPages - 1 && (
-        <span className="px-1 text-white/60">{totalPages}</span>
+        <button
+          onClick={() => onPageChange(totalPages - 1)}
+          className={`px-2 py-1 rounded ${
+            totalPages - 1 === currentPage
+              ? "bg-white/20 text-white font-bold"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          {totalPages}
+        </button>
       )}
       <button
         onClick={() => onPageChange(currentPage + 1)}
@@ -258,11 +278,28 @@ export const AdminPanel = () => {
   const [recentJobsPage, setRecentJobsPage] = useState(0);
   const jobsPerPage = 10;
 
+  // Current Queue Sorting: serving -> waiting -> completed
+  const statusPriority = (status: string) => {
+    if (status === "serving") return 0;
+    if (status === "waiting") return 1;
+    return 2; // completed or any other
+  };
+  const sortedQueue = [...queue].sort((a, b) => {
+    const pA = statusPriority(a.status);
+    const pB = statusPriority(b.status);
+    if (pA !== pB) return pA - pB;
+    // If same status, sort by queueNumber ascending
+    return (a.queueNumber || 0) - (b.queueNumber || 0);
+  });
+
   // Current Queue Pagination
-  const currentQueueTotalPages = Math.ceil(queue.length / jobsPerPage);
+  const currentQueueTotalPages = Math.ceil(sortedQueue.length / jobsPerPage);
   const currentQueueStart = currentQueuePage * jobsPerPage;
   const currentQueueEnd = currentQueueStart + jobsPerPage;
-  const currentQueueJobs = queue.slice(currentQueueStart, currentQueueEnd);
+  const currentQueueJobs = sortedQueue.slice(
+    currentQueueStart,
+    currentQueueEnd
+  );
 
   // Recent Jobs Pagination
   const recentJobsTotalPages = Math.ceil(pastJobs.length / jobsPerPage);
@@ -602,7 +639,7 @@ export const AdminPanel = () => {
                         </span>
                         <button
                           onClick={() => handleDelete(entry.id)}
-                          className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                          className="flex items-center justify-center w-10 h-10 rounded bg-red-500/40 hover:bg-red-500/60 text-white transition-colors"
                           title="Remove from queue"
                         >
                           <FiTrash2 className="w-5 h-5" />
@@ -699,7 +736,7 @@ export const AdminPanel = () => {
               </GlassCard>
             </div>
 
-            {/* Past Jobs */}
+            {/* Recent Jobs */}
             <GlassCard className="bg-white/5">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-white">
@@ -719,7 +756,7 @@ export const AdminPanel = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white/10 rounded-lg p-4"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4">
+                    <div className="grid grid-cols-1x md:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4">
                       <div>
                         <p className="text-white/70 text-sm">Queue Number</p>
                         <p className="text-white font-bold">
