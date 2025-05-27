@@ -17,14 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { QueueHistory } from "@/types/queue";
-import {
-  FiEdit2,
-  FiTrash2,
-  FiArrowUp,
-  FiArrowDown,
-  FiArrowLeft,
-  FiArrowRight,
-} from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiArrowLeft, FiArrowRight } from "react-icons/fi";
 
 type DateRange = {
   start: string;
@@ -561,7 +554,7 @@ export const AdminPanel = () => {
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, start: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
               />
             </div>
             <div>
@@ -574,7 +567,7 @@ export const AdminPanel = () => {
                 onChange={(e) =>
                   setDateRange((prev) => ({ ...prev, end: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
               />
             </div>
           </div>
