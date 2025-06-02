@@ -12,7 +12,10 @@ export const TVDisplay = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-6xl flex flex-col gap-8 items-center justify-center">
         {/* Now Serving Card */}
-        <GlassCard className="w-full max-w-4xl flex flex-col items-stretch justify-between">
+        <GlassCard
+          className="w-full max-w-4xl flex flex-col items-stretch justify-between"
+          variant="highlighted"
+        >
           <div className="flex flex-col h-full mb-4">
             <span className="text-2xl font-semibold text-white mb-4 text-center">
               Now Serving
@@ -95,7 +98,10 @@ export const TVDisplay = () => {
         </GlassCard>
 
         {/* Up Next */}
-        <GlassCard className="w-full max-w-4xl flex flex-col items-stretch justify-between">
+        <GlassCard
+          className="w-full max-w-4xl flex flex-col items-stretch justify-between"
+          variant="subtle"
+        >
           <div className="flex flex-col h-full">
             <span className="text-2xl font-semibold text-white text-center mb-4">
               Up next
