@@ -16,7 +16,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { QueueHistory } from "@/types/queue";
 import {
   FiEdit2,
   FiTrash2,
@@ -39,18 +38,26 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type DateRange = {
-  start: string;
-  end: string;
-};
+// Import new components
+import { OverviewComponent } from "./admin/OverviewComponent";
+import { QueueManagementComponent } from "./admin/QueueManagementComponent";
+import { AnalyticsComponent } from "./admin/AnalyticsComponent";
+import { HistoryComponent } from "./admin/HistoryComponent";
+import { SettingsComponent } from "./admin/SettingsComponent";
+
+// Import types
+import type {
+  QueueHistory,
+  Analytics,
+  DateRange,
+  ViewMode,
+} from "@/types/admin";
 
 type EditModalProps = {
   job: QueueHistory;
   onClose: () => void;
   onSave: (updatedJob: QueueHistory) => Promise<void>;
 };
-
-type ViewMode = "overview" | "queue" | "analytics" | "history" | "settings";
 
 // Custom Dark Date Picker Component
 const DatePicker = ({
@@ -372,135 +379,6 @@ const EditModal = ({ job, onClose, onSave }: EditModalProps) => {
   );
 };
 
-// Pagination component
-const Pagination = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) => {
-  if (totalPages <= 1) return null;
-  const pageNumbers = [];
-  let start = Math.max(0, currentPage - 1);
-  let end = Math.min(totalPages - 1, currentPage + 1);
-  if (currentPage === 0) end = Math.min(2, totalPages - 1);
-  if (currentPage === totalPages - 1) start = Math.max(0, totalPages - 3);
-  for (let i = start; i <= end; i++) pageNumbers.push(i);
-  return (
-    <div className="flex items-center gap-1 select-none">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 0}
-        className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        title="Previous page"
-      >
-        <FiArrowLeft className="w-4 h-4" />
-      </button>
-      {start > 0 && (
-        <button
-          onClick={() => onPageChange(0)}
-          className={`px-2 py-1 rounded ${
-            0 === currentPage
-              ? "bg-white/20 text-white font-bold"
-              : "text-white/80 hover:bg-white/10"
-          }`}
-        >
-          1
-        </button>
-      )}
-      {start > 1 && <span className="px-1 text-white/60">...</span>}
-      {pageNumbers.map((num) => (
-        <button
-          key={num}
-          onClick={() => onPageChange(num)}
-          className={`px-2 py-1 rounded ${
-            num === currentPage
-              ? "bg-white/20 text-white font-bold"
-              : "text-white/80 hover:bg-white/10"
-          }`}
-        >
-          {num + 1}
-        </button>
-      ))}
-      {end < totalPages - 2 && <span className="px-1 text-white/60">...</span>}
-      {end < totalPages - 1 && (
-        <button
-          onClick={() => onPageChange(totalPages - 1)}
-          className={`px-2 py-1 rounded ${
-            totalPages - 1 === currentPage
-              ? "bg-white/20 text-white font-bold"
-              : "text-white/80 hover:bg-white/10"
-          }`}
-        >
-          {totalPages}
-        </button>
-      )}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages - 1}
-        className="p-2 text-white/70 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        title="Next page"
-      >
-        <FiArrowRight className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
-
-// Search and Filter Component
-const SearchAndFilter = ({
-  searchTerm,
-  onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
-  deskFilter,
-  onDeskFilterChange,
-}: {
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
-  deskFilter: string;
-  onDeskFilterChange: (value: string) => void;
-}) => {
-  return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      <div className="relative flex-1">
-        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search by name or student ID..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/50 focus:border-blue-500/50 focus:outline-none"
-        />
-      </div>
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusFilterChange(e.target.value)}
-        className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-blue-500/50 focus:outline-none"
-      >
-        <option value="">All Status</option>
-        <option value="waiting">Waiting</option>
-        <option value="serving">Serving</option>
-        <option value="completed">Completed</option>
-      </select>
-      <select
-        value={deskFilter}
-        onChange={(e) => onDeskFilterChange(e.target.value)}
-        className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-blue-500/50 focus:outline-none"
-      >
-        <option value="">All Desks</option>
-        <option value="desk1">Desk 1</option>
-        <option value="desk2">Desk 2</option>
-      </select>
-    </div>
-  );
-};
-
 // Navigation Tabs Component
 const NavigationTabs = ({
   currentView,
@@ -548,36 +426,49 @@ const QuickActions = ({
   onExport,
   onResetQueue,
   isLoading,
+  currentView,
 }: {
   onRefresh: () => void;
   onExport: () => void;
   onResetQueue: () => void;
   isLoading: boolean;
+  currentView: ViewMode;
 }) => {
   return (
     <div className="flex flex-wrap gap-3 mb-6">
-      <button
-        onClick={onRefresh}
-        disabled={isLoading}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 transition-colors disabled:opacity-50"
-      >
-        <FiRefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        Refresh
-      </button>
-      <button
-        onClick={onExport}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 transition-colors"
-      >
-        <FiDownload className="w-4 h-4" />
-        Export Data
-      </button>
-      <button
-        onClick={onResetQueue}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors"
-      >
-        <FiTrash2 className="w-4 h-4" />
-        Reset Queue
-      </button>
+      {/* Show refresh and export only in overview */}
+      {currentView === "overview" && (
+        <>
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 transition-colors disabled:opacity-50"
+          >
+            <FiRefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </button>
+          <button
+            onClick={onExport}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 transition-colors"
+          >
+            <FiDownload className="w-4 h-4" />
+            Export Data
+          </button>
+        </>
+      )}
+
+      {/* Show reset queue only in queue management */}
+      {currentView === "queue" && (
+        <button
+          onClick={onResetQueue}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors"
+        >
+          <FiTrash2 className="w-4 h-4" />
+          Reset Queue
+        </button>
+      )}
     </div>
   );
 };
@@ -585,9 +476,6 @@ const QuickActions = ({
 export const AdminPanel = () => {
   const { queue, deleteFromQueue, resetQueue } = useQueue();
   const [currentView, setCurrentView] = useState<ViewMode>("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [deskFilter, setDeskFilter] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [editingJob, setEditingJob] = useState<QueueHistory | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -597,19 +485,10 @@ export const AdminPanel = () => {
     end: new Date().toISOString().split("T")[0],
   });
   const [pastJobs, setPastJobs] = useState<QueueHistory[]>([]);
-  const [analytics, setAnalytics] = useState<{
-    totalJobs: number;
-    averageWaitTime: number;
-    averageServiceTime: number;
-    jobsByDesk: { desk1: number; desk2: number };
-    dailyStats: {
-      [key: string]: { count: number; avgWait: number; avgService: number };
-    };
-    hourlyStats: { [key: string]: { count: number; avgWait: number } };
-    peakHours: { hour: string; count: number }[];
-    longestWait: { name: string; waitTime: number; date: string };
-    busiestDay: { date: string; count: number };
-  }>({
+  const [recentJobsPage, setRecentJobsPage] = useState(0);
+  const jobsPerPage = 10;
+
+  const [analytics, setAnalytics] = useState<Analytics>({
     totalJobs: 0,
     averageWaitTime: 0,
     averageServiceTime: 0,
@@ -620,51 +499,6 @@ export const AdminPanel = () => {
     longestWait: { name: "", waitTime: 0, date: "" },
     busiestDay: { date: "", count: 0 },
   });
-
-  // Add missing functions from original implementation
-  const [currentQueuePage, setCurrentQueuePage] = useState(0);
-  const [recentJobsPage, setRecentJobsPage] = useState(0);
-  const jobsPerPage = 10;
-
-  // Filter queue based on search and filters
-  const filteredQueue = queue.filter((entry) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "" || entry.status === statusFilter;
-    const matchesDesk = deskFilter === "" || entry.desk === deskFilter;
-    return matchesSearch && matchesStatus && matchesDesk;
-  });
-
-  // Current Queue Sorting: serving -> waiting -> completed
-  const statusPriority = (status: string) => {
-    if (status === "serving") return 0;
-    if (status === "waiting") return 1;
-    return 2; // completed or any other
-  };
-  const sortedQueue = [...filteredQueue].sort((a, b) => {
-    const pA = statusPriority(a.status);
-    const pB = statusPriority(b.status);
-    if (pA !== pB) return pA - pB;
-    // If same status, sort by queueNumber ascending
-    return (a.queueNumber || 0) - (b.queueNumber || 0);
-  });
-
-  // Current Queue Pagination
-  const currentQueueTotalPages = Math.ceil(sortedQueue.length / jobsPerPage);
-  const currentQueueStart = currentQueuePage * jobsPerPage;
-  const currentQueueEnd = currentQueueStart + jobsPerPage;
-  const currentQueueJobs = sortedQueue.slice(
-    currentQueueStart,
-    currentQueueEnd
-  );
-
-  // Recent Jobs Pagination
-  const recentJobsTotalPages = Math.ceil(pastJobs.length / jobsPerPage);
-  const recentJobsStart = recentJobsPage * jobsPerPage;
-  const recentJobsEnd = recentJobsStart + jobsPerPage;
-  const recentJobs = pastJobs.slice(recentJobsStart, recentJobsEnd);
 
   const fetchAnalytics = async () => {
     const historyRef = collection(db, "queueHistory");
@@ -887,20 +721,6 @@ export const AdminPanel = () => {
     }
   };
 
-  const handleDelete = async (entryId: string) => {
-    if (
-      !confirm("Are you sure you want to remove this person from the queue?")
-    ) {
-      return;
-    }
-    const success = await deleteFromQueue(entryId);
-    if (success) {
-      toast.success("Removed from queue");
-    } else {
-      toast.error("Failed to remove from queue");
-    }
-  };
-
   const handleRefresh = () => {
     setIsLoading(true);
     fetchAnalytics().finally(() => setIsLoading(false));
@@ -1024,6 +844,18 @@ export const AdminPanel = () => {
         color: [0, 102, 204],
       });
       yPosition += 15;
+
+      const sortedQueue = [...queue].sort((a, b) => {
+        const statusPriority = (status: string) => {
+          if (status === "serving") return 0;
+          if (status === "waiting") return 1;
+          return 2;
+        };
+        const pA = statusPriority(a.status);
+        const pB = statusPriority(b.status);
+        if (pA !== pB) return pA - pB;
+        return (a.queueNumber || 0) - (b.queueNumber || 0);
+      });
 
       const currentQueueData = sortedQueue
         .slice(0, 20)
@@ -1223,225 +1055,6 @@ export const AdminPanel = () => {
     toast.success("PDF report generated successfully");
   };
 
-  const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Live Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <GlassCard className="bg-gradient-to-br from-blue-500/20 to-blue-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">
-                Current Queue
-              </h3>
-              <p className="text-2xl font-bold text-white">{queue.length}</p>
-            </div>
-            <FiUsers className="w-8 h-8 text-blue-400" />
-          </div>
-        </GlassCard>
-        <GlassCard className="bg-gradient-to-br from-green-500/20 to-green-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">Serving Now</h3>
-              <p className="text-2xl font-bold text-white">
-                {queue.filter((e) => e.status === "serving").length}
-              </p>
-            </div>
-            <FiEye className="w-8 h-8 text-green-400" />
-          </div>
-        </GlassCard>
-        <GlassCard className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">
-                Avg Wait Time
-              </h3>
-              <p className="text-2xl font-bold text-white">
-                {analytics.averageWaitTime}m
-              </p>
-            </div>
-            <FiClock className="w-8 h-8 text-yellow-400" />
-          </div>
-        </GlassCard>
-        <GlassCard className="bg-gradient-to-br from-purple-500/20 to-purple-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">
-                Total Served
-              </h3>
-              <p className="text-2xl font-bold text-white">
-                {analytics.totalJobs}
-              </p>
-            </div>
-            <FiTrendingUp className="w-8 h-8 text-purple-400" />
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* Current Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard>
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Active Desks
-          </h3>
-          <div className="space-y-3">
-            {["desk1", "desk2"].map((desk) => {
-              const serving = queue.find(
-                (e) => e.status === "serving" && e.desk === desk
-              );
-              return (
-                <div
-                  key={desk}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium text-white">
-                      {desk === "desk1" ? "Desk 1" : "Desk 2"}
-                    </p>
-                    {serving ? (
-                      <p className="text-sm text-white/80">
-                        Serving: {serving.name} (#{serving.queueNumber})
-                      </p>
-                    ) : (
-                      <p className="text-sm text-white/60">Available</p>
-                    )}
-                  </div>
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      serving ? "bg-green-400" : "bg-gray-500"
-                    }`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </GlassCard>
-
-        <GlassCard>
-          <h3 className="text-lg font-semibold text-white mb-4">
-            Recent Activity
-          </h3>
-          <div className="space-y-3">
-            {pastJobs.slice(0, 5).map((job) => (
-              <div
-                key={job.id}
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-white">
-                    #{job.queueNumber} {job.name}
-                  </p>
-                  <p className="text-sm text-white/80">
-                    {formatTime(job.completionTime)} • {job.waitTime}m wait
-                  </p>
-                </div>
-                <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-300">
-                  Completed
-                </span>
-              </div>
-            ))}
-          </div>
-        </GlassCard>
-      </div>
-    </div>
-  );
-
-  // Add renderQueueView function
-  const renderQueueView = () => (
-    <div className="space-y-6">
-      <SearchAndFilter
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        deskFilter={deskFilter}
-        onDeskFilterChange={setDeskFilter}
-      />
-
-      <GlassCard>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">
-            Current Queue ({filteredQueue.length})
-          </h2>
-          <Pagination
-            currentPage={currentQueuePage}
-            totalPages={currentQueueTotalPages}
-            onPageChange={setCurrentQueuePage}
-          />
-        </div>
-
-        <div className="space-y-4">
-          {currentQueueJobs.map((entry) => (
-            <motion.div
-              key={entry.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white/5 rounded-lg p-4 hover:bg-white/10 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="text-2xl font-bold text-white">
-                      #{entry.queueNumber}
-                    </span>
-                    <div>
-                      <p className="text-lg font-semibold text-white">
-                        {entry.name}
-                      </p>
-                      <p className="text-sm text-white/70">
-                        ID: {entry.studentId}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        entry.status === "serving"
-                          ? "bg-green-500/20 text-green-300"
-                          : entry.status === "waiting"
-                          ? "bg-yellow-500/20 text-yellow-300"
-                          : "bg-gray-500/20 text-gray-300"
-                      }`}
-                    >
-                      {entry.status.toUpperCase()}
-                    </span>
-                    <span className="text-white/70">
-                      Desk:{" "}
-                      {entry.desk
-                        ? entry.desk === "desk1"
-                          ? "1"
-                          : "2"
-                        : "Unassigned"}
-                    </span>
-                    <span className="text-white/70">
-                      {Math.round((Date.now() - entry.timestamp) / 60000)}m ago
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDelete(entry.id)}
-                  className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors"
-                  title="Remove from queue"
-                >
-                  <FiTrash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-          {currentQueueJobs.length === 0 && (
-            <div className="text-center py-12">
-              <FiUsers className="w-16 h-16 text-white/30 mx-auto mb-4" />
-              <p className="text-white/70 text-lg">No queue entries found</p>
-              <p className="text-white/50 text-sm">
-                Try adjusting your filters
-              </p>
-            </div>
-          )}
-        </div>
-      </GlassCard>
-    </div>
-  );
-
-  // Update the render method to include the queue view
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -1483,6 +1096,7 @@ export const AdminPanel = () => {
             onExport={handleExport}
             onResetQueue={handleReset}
             isLoading={isLoading}
+            currentView={currentView}
           />
         </div>
 
@@ -1495,29 +1109,42 @@ export const AdminPanel = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
           >
-            {currentView === "overview" && renderOverview()}
-            {currentView === "queue" && renderQueueView()}
+            {currentView === "overview" && (
+              <OverviewComponent
+                queue={queue}
+                analytics={analytics}
+                pastJobs={pastJobs}
+                formatTime={formatTime}
+                formatDate={formatDate}
+              />
+            )}
+            {currentView === "queue" && (
+              <QueueManagementComponent
+                queue={queue}
+                deleteFromQueue={deleteFromQueue}
+              />
+            )}
             {currentView === "analytics" && (
-              <div className="text-center py-12">
-                <FiBarChart className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70 text-lg">Advanced Analytics</p>
-                <p className="text-white/50 text-sm">Coming soon...</p>
-              </div>
+              <AnalyticsComponent
+                queue={queue}
+                analytics={analytics}
+                pastJobs={pastJobs}
+                dateRange={dateRange}
+              />
             )}
             {currentView === "history" && (
-              <div className="text-center py-12">
-                <FiClock className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70 text-lg">Historical Data</p>
-                <p className="text-white/50 text-sm">Coming soon...</p>
-              </div>
+              <HistoryComponent
+                pastJobs={pastJobs}
+                setPastJobs={setPastJobs}
+                setEditingJob={setEditingJob}
+                formatTime={formatTime}
+                formatDate={formatDate}
+                recentJobsPage={recentJobsPage}
+                setRecentJobsPage={setRecentJobsPage}
+                jobsPerPage={jobsPerPage}
+              />
             )}
-            {currentView === "settings" && (
-              <div className="text-center py-12">
-                <FiSettings className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70 text-lg">System Settings</p>
-                <p className="text-white/50 text-sm">Coming soon...</p>
-              </div>
-            )}
+            {currentView === "settings" && <SettingsComponent />}
           </motion.div>
         </AnimatePresence>
       </div>
