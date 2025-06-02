@@ -2,7 +2,7 @@ import { useQueue } from "@/hooks/useQueue";
 import { GlassCard } from "./ui/GlassCard";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   query,
@@ -17,7 +17,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { QueueHistory } from "@/types/queue";
-import { FiEdit2, FiTrash2, FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiTrash2,
+  FiArrowLeft,
+  FiArrowRight,
+  FiCalendar,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 
 type DateRange = {
   start: string;
@@ -28,6 +36,201 @@ type EditModalProps = {
   job: QueueHistory;
   onClose: () => void;
   onSave: (updatedJob: QueueHistory) => Promise<void>;
+};
+
+// Custom Dark Date Picker Component
+const DatePicker = ({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (date: string) => void;
+  label: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const date = value ? new Date(value) : new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  });
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Update currentMonth when value changes from outside
+  useEffect(() => {
+    if (value) {
+      const date = new Date(value);
+      setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    }
+  }, [value]);
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return "Select date";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const handleDateSelect = (day: number) => {
+    const newDate = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    const dateString = newDate.toISOString().split("T")[0];
+    onChange(dateString);
+    setIsOpen(false);
+  };
+
+  const navigateMonth = (direction: "prev" | "next") => {
+    setCurrentMonth((prev) => {
+      const newMonth = new Date(prev);
+      if (direction === "prev") {
+        newMonth.setMonth(newMonth.getMonth() - 1);
+      } else {
+        newMonth.setMonth(newMonth.getMonth() + 1);
+      }
+      return newMonth;
+    });
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const days = [];
+    const today = new Date();
+    const selectedDateObj = value ? new Date(value) : null;
+
+    // Empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="w-10 h-10" />);
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayDate = new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth(),
+        day
+      );
+      const isToday =
+        dayDate.getDate() === today.getDate() &&
+        dayDate.getMonth() === today.getMonth() &&
+        dayDate.getFullYear() === today.getFullYear();
+
+      const isSelected =
+        selectedDateObj &&
+        dayDate.getDate() === selectedDateObj.getDate() &&
+        dayDate.getMonth() === selectedDateObj.getMonth() &&
+        dayDate.getFullYear() === selectedDateObj.getFullYear();
+
+      days.push(
+        <button
+          key={day}
+          onClick={() => handleDateSelect(day)}
+          className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+            isSelected
+              ? "bg-blue-500 text-white"
+              : isToday
+              ? "bg-white/20 text-white"
+              : "text-white/80 hover:bg-white/10"
+          }`}
+        >
+          {day}
+        </button>
+      );
+    }
+
+    return days;
+  };
+
+  return (
+    <div className="relative" ref={datePickerRef}>
+      <label className="block text-sm font-medium text-white mb-1">
+        {label}
+      </label>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white flex items-center justify-between hover:bg-white/10 transition-colors"
+      >
+        <span>{formatDisplayDate(value)}</span>
+        <FiCalendar className="w-4 h-4 text-white/70" />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 z-50 mt-2 p-4 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl min-w-[280px]"
+          >
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => navigateMonth("prev")}
+                className="p-1 text-white/70 hover:text-white transition-colors"
+              >
+                <FiChevronLeft className="w-4 h-4" />
+              </button>
+              <h3 className="text-white font-medium">
+                {currentMonth.toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </h3>
+              <button
+                onClick={() => navigateMonth("next")}
+                className="p-1 text-white/70 hover:text-white transition-colors"
+              >
+                <FiChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                <div
+                  key={day}
+                  className="w-10 h-8 text-xs text-white/60 text-center flex items-center justify-center font-medium"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
 
 const EditModal = ({ job, onClose, onSave }: EditModalProps) => {
@@ -544,32 +747,20 @@ export const AdminPanel = () => {
             Admin Dashboard
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={dateRange.start}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, start: e.target.value }))
-                }
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">
-                End Date
-              </label>
-              <input
-                type="date"
-                value={dateRange.end}
-                onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, end: e.target.value }))
-                }
-                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
-              />
-            </div>
+            <DatePicker
+              value={dateRange.start}
+              onChange={(date) =>
+                setDateRange((prev) => ({ ...prev, start: date }))
+              }
+              label="Start Date"
+            />
+            <DatePicker
+              value={dateRange.end}
+              onChange={(date) =>
+                setDateRange((prev) => ({ ...prev, end: date }))
+              }
+              label="End Date"
+            />
           </div>
         </div>
 
