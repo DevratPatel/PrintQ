@@ -70,12 +70,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       const authError = error as AuthError;
+      console.log("Login error:", authError.code, authError.message);
+
+      // If user not found in Firebase Auth, check if they exist in our Firestore with temp password
+      if (
+        authError.code === "auth/user-not-found" ||
+        authError.code === "auth/invalid-credential"
+      ) {
+        try {
+          console.log(
+            "Attempting to create Firebase account for existing Firestore user"
+          );
+          const { createFirebaseAccountOnLogin } = await import(
+            "@/lib/userManagement"
+          );
+          const result = await createFirebaseAccountOnLogin(email, password);
+
+          if (result.success) {
+            toast.success("Account activated! Successfully logged in!");
+            return true;
+          } else {
+            console.log("Failed to create Firebase account:", result.error);
+            toast.error(result.error || "Invalid email or password.");
+            return false;
+          }
+        } catch (createError) {
+          console.log("Error in createFirebaseAccountOnLogin:", createError);
+          toast.error("No user found with this email address.");
+          return false;
+        }
+      }
+
       let errorMessage = "Login failed. Please try again.";
 
       switch (authError.code) {
-        case "auth/user-not-found":
-          errorMessage = "No user found with this email address.";
-          break;
         case "auth/wrong-password":
           errorMessage = "Incorrect password.";
           break;

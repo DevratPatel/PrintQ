@@ -208,15 +208,15 @@ const TempPasswordModal: React.FC<TempPasswordModalProps> = ({
 
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
             <p className="text-yellow-400 font-medium mb-3">
-              Temporary Password:
+              🔑 Temporary Password:
             </p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-black/30 rounded px-3 py-2 font-mono text-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 bg-black/30 rounded px-3 py-2 font-mono text-lg font-bold select-all">
                 {showPassword ? tempPassword : "••••••••••••"}
               </div>
               <button
                 onClick={() => setShowPassword(!showPassword)}
-                className="p-2 text-white/70 hover:text-white transition-colors"
+                className="p-2 text-white/70 hover:text-white transition-colors rounded-lg hover:bg-white/10"
                 title={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -227,15 +227,30 @@ const TempPasswordModal: React.FC<TempPasswordModalProps> = ({
               </button>
               <button
                 onClick={copyToClipboard}
-                className="p-2 text-white/70 hover:text-white transition-colors"
-                title="Copy password"
+                className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 rounded-lg transition-colors text-sm font-medium border border-yellow-500/30"
+                title="Copy password to clipboard"
               >
                 {copied ? (
-                  <FiCheck className="w-4 h-4 text-green-400" />
+                  <>
+                    <FiCheck className="w-4 h-4 inline mr-1" />
+                    Copied!
+                  </>
                 ) : (
-                  <FiCopy className="w-4 h-4" />
+                  <>
+                    <FiCopy className="w-4 h-4 inline mr-1" />
+                    Copy
+                  </>
                 )}
               </button>
+            </div>
+            <div className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-500/20">
+              <p className="text-yellow-300 text-sm font-medium">
+                ⚠️ Important: Share this password securely with the user
+              </p>
+              <p className="text-yellow-200/80 text-xs mt-1">
+                This is a one-time temporary password. The user will be required
+                to change it on first login.
+              </p>
             </div>
           </div>
 
@@ -244,20 +259,19 @@ const TempPasswordModal: React.FC<TempPasswordModalProps> = ({
             <ol className="text-white/70 text-sm space-y-1 list-decimal list-inside">
               <li>Share this temporary password with the user</li>
               <li>
-                Send them this registration link: <br />
+                Direct them to the login page: <br />
                 <span className="font-mono text-blue-300 text-xs break-all">
                   {typeof window !== "undefined"
-                    ? `${
-                        window.location.origin
-                      }/register?email=${encodeURIComponent(user.email)}`
-                    : "/register"}
+                    ? `${window.location.origin}/login`
+                    : "/login"}
                 </span>
               </li>
               <li>
-                They will create their account using the temporary password
+                They should log in using their email and the temporary password
               </li>
               <li>
-                They'll set their own permanent password during registration
+                They'll be prompted to create a new password immediately after
+                login
               </li>
             </ol>
           </div>

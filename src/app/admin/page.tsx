@@ -2,10 +2,29 @@
 
 import { AdminPanel } from "@/components/AdminPanel";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import React from "react";
 
 export default function AdminPage() {
+  const { userDetails, loading } = useAuth();
+  const router = useRouter();
+
+  // Redirect non-admins
+  React.useEffect(() => {
+    if (!loading && userDetails && userDetails.role !== "admin") {
+      toast.error("You do not have permission to access the admin panel");
+      router.replace("/");
+    }
+  }, [loading, userDetails, router]);
+
+  // While determining role or redirecting, render nothing to avoid flash
+  if (loading || (userDetails && userDetails.role !== "admin")) {
+    return null;
+  }
+
   return (
     <ProtectedRoute>
       {/* Background */}

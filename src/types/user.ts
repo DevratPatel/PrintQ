@@ -8,6 +8,7 @@ export interface User {
   isActive: boolean;
   lastLoginAt?: number;
   tempPassword?: string;
+  needsFirebaseAccount?: boolean;
 }
 
 export interface CreateUserRequest {
