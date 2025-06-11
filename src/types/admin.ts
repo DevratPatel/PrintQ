@@ -35,4 +35,5 @@ export type ViewMode =
   | "queue"
   | "analytics"
   | "history"
+  | "users"
   | "settings";

@@ -3,7 +3,8 @@ import { GlassCard } from "./ui/GlassCard";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { FiTrash2, FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { FiTrash2, FiArrowLeft, FiArrowRight, FiLogOut } from "react-icons/fi";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DeskPanelProps {
   desk: "desk1" | "desk2";
@@ -96,6 +97,7 @@ export const DeskPanel = ({ desk }: DeskPanelProps) => {
     resetQueue,
     deleteFromQueue,
   } = useQueue();
+  const { logout, user } = useAuth();
   const serving = getServingForDesk(desk);
   const waiting = getWaitingQueue();
   const [isResetting, setIsResetting] = useState(false);
@@ -175,9 +177,26 @@ export const DeskPanel = ({ desk }: DeskPanelProps) => {
     <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
         <GlassCard className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-6">
-            {desk === "desk1" ? "Desk 1" : "Desk 2"} Queue Management
-          </h1>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                {desk === "desk1" ? "Desk 1" : "Desk 2"} Queue Management
+              </h1>
+              {user && (
+                <p className="text-white/50 text-sm mt-1">
+                  Logged in as: {user.email}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 transition-colors border border-red-500/30"
+              title="Logout"
+            >
+              <FiLogOut className="w-4 h-4" />
+              <span className="hidden md:inline">Logout</span>
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h2 className="text-xl font-semibold text-white mb-4">

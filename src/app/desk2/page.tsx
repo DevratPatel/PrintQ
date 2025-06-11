@@ -1,12 +1,13 @@
 "use client";
 
 import { DeskPanel } from "@/components/DeskPanel";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
 import { motion } from "framer-motion";
 
 export default function Desk2Page() {
   return (
-    <>
+    <ProtectedRoute>
       {/* Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-black dark:to-blue-950" />
 
@@ -51,6 +52,6 @@ export default function Desk2Page() {
           },
         }}
       />
-    </>
+    </ProtectedRoute>
   );
 }

@@ -34,6 +34,8 @@ import {
   FiFilter,
   FiEye,
   FiBarChart,
+  FiLogOut,
+  FiUserPlus,
 } from "react-icons/fi";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -44,6 +46,10 @@ import { QueueManagementComponent } from "./admin/QueueManagementComponent";
 import { AnalyticsComponent } from "./admin/AnalyticsComponent";
 import { HistoryComponent } from "./admin/HistoryComponent";
 import { SettingsComponent } from "./admin/SettingsComponent";
+import { UserManagementComponent } from "./admin/UserManagementComponent";
+
+// Import authentication
+import { useAuth } from "@/contexts/AuthContext";
 
 // Import types
 import type {
@@ -392,6 +398,7 @@ const NavigationTabs = ({
     { id: "queue", label: "Queue Management", icon: FiUsers },
     { id: "analytics", label: "Analytics", icon: FiTrendingUp },
     { id: "history", label: "History", icon: FiClock },
+    { id: "users", label: "User Management", icon: FiUserPlus },
     { id: "settings", label: "Settings", icon: FiSettings },
   ] as const;
 
@@ -475,6 +482,7 @@ const QuickActions = ({
 
 export const AdminPanel = () => {
   const { queue, deleteFromQueue, resetQueue } = useQueue();
+  const { logout, user } = useAuth();
   const [currentView, setCurrentView] = useState<ViewMode>("overview");
   const [isLoading, setIsLoading] = useState(false);
   const [editingJob, setEditingJob] = useState<QueueHistory | null>(null);
@@ -1068,22 +1076,37 @@ export const AdminPanel = () => {
               <p className="text-white/70">
                 Manage your queue system and analyze performance
               </p>
+              {user && (
+                <p className="text-white/50 text-sm mt-1">
+                  Logged in as: {user.email}
+                </p>
+              )}
             </div>
-            <div className="flex flex-col md:flex-row gap-4">
-              <DatePicker
-                value={dateRange.start}
-                onChange={(date) =>
-                  setDateRange((prev) => ({ ...prev, start: date }))
-                }
-                label="From"
-              />
-              <DatePicker
-                value={dateRange.end}
-                onChange={(date) =>
-                  setDateRange((prev) => ({ ...prev, end: date }))
-                }
-                label="To"
-              />
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex flex-col md:flex-row gap-4">
+                <DatePicker
+                  value={dateRange.start}
+                  onChange={(date) =>
+                    setDateRange((prev) => ({ ...prev, start: date }))
+                  }
+                  label="From"
+                />
+                <DatePicker
+                  value={dateRange.end}
+                  onChange={(date) =>
+                    setDateRange((prev) => ({ ...prev, end: date }))
+                  }
+                  label="To"
+                />
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 transition-colors border border-red-500/30"
+                title="Logout"
+              >
+                <FiLogOut className="w-4 h-4" />
+                <span className="hidden md:inline">Logout</span>
+              </button>
             </div>
           </div>
 
@@ -1144,6 +1167,7 @@ export const AdminPanel = () => {
                 jobsPerPage={jobsPerPage}
               />
             )}
+            {currentView === "users" && <UserManagementComponent />}
             {currentView === "settings" && <SettingsComponent />}
           </motion.div>
         </AnimatePresence>
