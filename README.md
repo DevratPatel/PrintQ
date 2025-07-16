@@ -1,4 +1,4 @@
-# Queue Management App 🚀
+# PrintQ 🚀
 
 A sophisticated, real-time web application for managing poster printing queues, built with modern technologies and featuring a beautiful glassmorphism UI. This solution implements efficient queue management with real-time synchronization.
 
