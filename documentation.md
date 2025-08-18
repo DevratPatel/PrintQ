@@ -1,20 +1,20 @@
 # PrintQ Queue Management System - Manager Documentation
 
-## 📋 System Overview
+## System Overview
 
 The PrintQ Queue Management System is a modern, user-friendly application designed to streamline customer service operations at UTA Libraries Print & Design Studios. This system replaces manual queue management with an automated, real-time solution that improves customer experience and staff efficiency.
 
-## 🎯 What This System Does
+## What This System Does
 
-- **Manages customer queues** automatically across two service desks
-- **Provides real-time updates** to customers about their position and wait times
-- **Tracks performance metrics** to help optimize operations
-- **Manages staff accounts** and access permissions
-- **Displays queue information** on public screens for customer visibility
+- Manages customer queues automatically across two service desks
+- Provides real-time updates to customers about their position and wait times
+- Tracks performance metrics to help optimize operations
+- Manages staff accounts and access permissions
+- Displays queue information on public screens for customer visibility
 
-## 🖥️ System Pages and Their Functions
+## System Pages and Their Functions
 
-### 1. **Login Page** 🔐
+### 1. Login Page
 
 **Purpose**: Secure access point for staff members
 
@@ -32,7 +32,7 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 ---
 
-### 2. **Admin Dashboard** 📊
+### 2. Admin Dashboard
 
 **Purpose**: Central control center for managers and administrators
 
@@ -40,44 +40,44 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 **Main Functions**:
 
-#### **Overview Tab** 📈
+#### Overview Tab
 
-- **Real-time dashboard** showing current system status
-- **Quick statistics**: Total customers served, current queue length, average wait times
-- **Recent activity**: Latest customer entries and completions
-- **Export functionality**: Download reports for meetings and analysis
+- Real-time dashboard showing current system status
+- Quick statistics: Total customers served, current queue length, average wait times
+- Recent activity: Latest customer entries and completions
+- Export functionality: Download reports for meetings and analysis
 
-#### **Queue Management Tab** 👥
+#### Queue Management Tab
 
-- **Live queue monitoring**: See all customers currently waiting
-- **Manual controls**: Move customers between desks, remove from queue if needed
-- **Queue reset**: Clear entire queue if necessary (e.g., end of day)
-- **Real-time updates**: See changes as they happen
+- Live queue monitoring: See all customers currently waiting
+- Manual controls: Move customers between desks, remove from queue if needed
+- Queue reset: Clear entire queue if necessary (e.g., end of day)
+- Real-time updates: See changes as they happen
 
-#### **Analytics Tab** 📊
+#### Analytics Tab
 
-- **Performance metrics**: Daily trends, hourly patterns, desk utilization
-- **Customer flow analysis**: When are the busiest times?
-- **Wait time analysis**: How long do customers typically wait?
-- **Service efficiency**: How quickly are customers served?
+- Performance metrics: Daily trends, hourly patterns, desk utilization
+- Customer flow analysis: When are the busiest times?
+- Wait time analysis: How long do customers typically wait?
+- Service efficiency: How quickly are customers served?
 
-#### **History Tab** 📚
+#### History Tab
 
-- **Complete records**: Every customer interaction stored for review
-- **Search and filter**: Find specific customers or time periods
-- **Data export**: Download historical data for reporting
-- **Performance review**: Analyze past performance to improve future operations
+- Complete records: Every customer interaction stored for review
+- Search and filter: Find specific customers or time periods
+- Data export: Download historical data for reporting
+- Performance review: Analyze past performance to improve future operations
 
-#### **User Management Tab** 👤
+#### User Management Tab
 
-- **Staff accounts**: Create new staff member accounts
-- **Role management**: Assign admin or desk worker permissions
-- **Password management**: Reset passwords, manage account access
-- **Account status**: Enable/disable accounts as needed
+- Staff accounts: Create new staff member accounts
+- Role management: Assign admin or desk worker permissions
+- Password management: Reset passwords, manage account access
+- Account status: Enable/disable accounts as needed
 
 ---
 
-### 3. **Desk 1 & Desk 2 Pages** 🖥️
+### 3. Desk 1 & Desk 2 Pages
 
 **Purpose**: Workstations for staff serving customers
 
@@ -85,11 +85,11 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 **What Staff Can Do**:
 
-- **See current queue**: View all waiting customers
-- **Call next customer**: Move customer from waiting to being served
-- **Complete service**: Mark customer as finished
-- **Remove customers**: Take customers out of queue if needed
-- **Real-time updates**: See queue changes instantly
+- See current queue: View all waiting customers
+- Call next customer: Move customer from waiting to being served
+- Complete service: Mark customer as finished
+- Remove customers: Take customers out of queue if needed
+- Real-time updates: See queue changes instantly
 
 **What Staff See**:
 
@@ -100,16 +100,16 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 ---
 
-### 4. **Public Display Page** 📺
+### 4. Public Display Page
 
 **Purpose**: Shows queue information to waiting customers
 
 **What Customers See**:
 
-- **"Now Serving"**: Current customer being helped
-- **"Up Next"**: Next few customers in line
-- **Queue numbers**: Clear identification system
-- **Professional appearance**: Clean, easy-to-read display
+- "Now Serving": Current customer being helped
+- "Up Next": Next few customers in line
+- Queue numbers: Clear identification system
+- Professional appearance: Clean, easy-to-read display
 
 **Where It's Used**:
 
@@ -120,7 +120,7 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 ---
 
-### 5. **Customer Entry Page** 📝
+### 5. Customer Entry Page
 
 **Purpose**: Where customers join the queue
 
@@ -140,113 +140,196 @@ The PrintQ Queue Management System is a modern, user-friendly application design
 
 ---
 
-## 🔄 How the System Works (Simple Explanation)
+## How the System Works (Simple Explanation)
 
-### **Customer Journey**:
+### Customer Journey:
 
-1. **Customer arrives** → Uses entry form to join queue
-2. **System assigns** → Automatically places customer in line
-3. **Staff sees** → Customer appears on desk screens
-4. **Staff calls** → Clicks "Call Next" when ready
-5. **Customer served** → Staff helps customer
-6. **Service complete** → Staff marks customer as finished
-7. **Customer leaves** → Removed from system
+1. Customer arrives → Uses entry form to join queue
+2. System assigns → Automatically places customer in line
+3. Staff sees → Customer appears on desk screens
+4. Staff calls → Clicks "Call Next" when ready
+5. Customer served → Staff helps customer
+6. Service complete → Staff marks customer as finished
+7. Customer leaves → Removed from system
 
-### **Real-Time Updates**:
+### Real-Time Updates:
 
-- **Instant notifications**: Staff see changes immediately
-- **Live displays**: Public screens update automatically
-- **Queue positions**: Customers see real-time updates
-- **Wait times**: Accurate estimates based on current activity
+- Instant notifications: Staff see changes immediately
+- Live displays: Public screens update automatically
+- Queue positions: Customers see real-time updates
+- Wait times: Accurate estimates based on current activity
 
-## 📊 Key Benefits for Your Business
+## Key Benefits for Your Business
 
-### **For Customers**:
+### For Customers:
 
-- **No more confusion** about who's next
-- **Clear expectations** about wait times
-- **Professional experience** with digital displays
-- **Fair service** based on arrival time
+- No more confusion about who's next
+- Clear expectations about wait times
+- Professional experience with digital displays
+- Fair service based on arrival time
 
-### **For Staff**:
+### For Staff:
 
-- **Organized workflow** with clear customer order
-- **Efficient service** with automated queue management
-- **Better communication** with customers
-- **Reduced stress** from manual queue management
+- Organized workflow with clear customer order
+- Efficient service with automated queue management
+- Better communication with customers
+- Reduced stress from manual queue management
 
-### **For Management**:
+### For Management:
 
-- **Performance insights** through analytics
-- **Operational efficiency** improvements
-- **Customer satisfaction** tracking
-- **Staff productivity** monitoring
-- **Data-driven decisions** with historical reports
+- Performance insights through analytics
+- Operational efficiency improvements
+- Customer satisfaction tracking
+- Staff productivity monitoring
+- Data-driven decisions with historical reports
 
-## 🎯 Daily Operations
+## Daily Operations
 
-### **Morning Setup**:
+### Morning Setup:
 
 - Staff log in to their assigned desks
 - Admin checks system status
 - Queue starts empty and ready
 
-### **During Operations**:
+### During Operations:
 
 - Customers join queue automatically
 - Staff serve customers in order
 - System tracks everything automatically
 - Real-time updates for everyone
 
-### **End of Day**:
+### End of Day:
 
 - Admin can reset queue if needed
 - System stores all data for analysis
 - Reports available for next day planning
 
-## 📈 Reports and Analytics Available
+## Reports and Analytics Available
 
-### **Real-Time Metrics**:
+### Real-Time Metrics:
 
 - Current queue length
 - Average wait times
 - Staff productivity
 - Customer flow patterns
 
-### **Historical Data**:
+### Historical Data:
 
 - Daily performance trends
 - Peak hours identification
 - Staff efficiency over time
 - Customer satisfaction indicators
 
-### **Export Options**:
+### Export Options:
 
 - PDF reports for meetings
 - Excel files for detailed analysis
 - Custom date ranges
 - Department-specific data
 
-## 🔧 System Requirements
+## System Requirements
 
-### **What You Need**:
+### What You Need:
 
-- **Internet connection** for real-time updates
-- **Computer or tablet** for each desk
-- **Display screen** for public viewing
-- **Staff training** (minimal - very user-friendly)
+- Internet connection for real-time updates
+- Computer or tablet for each desk
+- Display screen for public viewing
+- Staff training (minimal - very user-friendly)
 
-### **What You Get**:
+### What You Get:
 
-- **24/7 system availability**
-- **Automatic backups** of all data
-- **Secure access** for authorized staff
-- **Mobile-friendly** interface
-- **Professional appearance**
+- 24/7 system availability
+- Automatic backups of all data
+- Secure access for authorized staff
+- Mobile-friendly interface
+- Professional appearance
+
+## Getting Started
+
+### Phase 1: Setup (1-2 days)
+
+- Install system on staff computers
+- Set up public display screens
+- Create staff accounts
+- Basic staff training
+
+### Phase 2: Go Live (1 day)
+
+- Start with small customer groups
+- Staff practice with system
+- Monitor and adjust as needed
+
+### Phase 3: Full Operation (ongoing)
+
+- Regular system usage
+- Monitor performance metrics
+- Generate reports for management
+- Continuous improvement
+
+## Tips for Success
+
+### Staff Training:
+
+- Keep it simple: System is designed to be intuitive
+- Practice sessions: Let staff try before going live
+- Support available: Help desk for questions
+- Regular check-ins: Monitor how staff are adapting
+
+### Customer Communication:
+
+- Clear signage: Explain how to use the system
+- Staff assistance: Help customers who need guidance
+- Professional appearance: Clean, organized waiting areas
+
+### Management Oversight:
+
+- Regular reviews: Check performance reports weekly
+- Staff feedback: Listen to suggestions for improvements
+- Customer satisfaction: Monitor wait times and service quality
+- Continuous improvement: Use data to optimize operations
+
+## Support and Maintenance
+
+### What's Included:
+
+- System monitoring: Automatic health checks
+- Data backup: Secure storage of all information
+- Updates: Regular system improvements
+- Technical support: Help when needed
+
+### Maintenance Tasks:
+
+- Daily: Check system status
+- Weekly: Review performance reports
+- Monthly: Analyze trends and patterns
+- As needed: Address any issues or questions
+
+## Expected Outcomes
+
+### Immediate Benefits (Week 1):
+
+- Reduced confusion in waiting areas
+- Faster service with organized queues
+- Professional appearance for customers
+- Staff efficiency improvements
+
+### Short-term Benefits (Month 1):
+
+- Better customer satisfaction scores
+- Improved staff productivity
+- Reduced wait times
+- Better operational insights
+
+### Long-term Benefits (3+ months):
+
+- Data-driven decisions for staffing
+- Optimized operations based on patterns
+- Improved customer retention
+- Competitive advantage in service quality
 
 ---
 
-## 📋 Summary
+## Summary
 
 The PrintQ Queue Management System transforms your customer service operations from manual, chaotic processes to organized, efficient, and professional experiences. It's designed to be simple for staff to use while providing powerful insights for management.
 
