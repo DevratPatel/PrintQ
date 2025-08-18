@@ -30,7 +30,6 @@ import {
   FiUsers,
   FiClock,
   FiTrendingUp,
-  FiSettings,
   FiFilter,
   FiEye,
   FiBarChart,
@@ -45,7 +44,7 @@ import { OverviewComponent } from "./admin/OverviewComponent";
 import { QueueManagementComponent } from "./admin/QueueManagementComponent";
 import { AnalyticsComponent } from "./admin/AnalyticsComponent";
 import { HistoryComponent } from "./admin/HistoryComponent";
-import { SettingsComponent } from "./admin/SettingsComponent";
+
 import { UserManagementComponent } from "./admin/UserManagementComponent";
 
 // Import authentication
@@ -399,7 +398,6 @@ const NavigationTabs = ({
     { id: "analytics", label: "Analytics", icon: FiTrendingUp },
     { id: "history", label: "History", icon: FiClock },
     { id: "users", label: "User Management", icon: FiUserPlus },
-    { id: "settings", label: "Settings", icon: FiSettings },
   ] as const;
 
   return (
@@ -1168,7 +1166,6 @@ export const AdminPanel = () => {
               />
             )}
             {currentView === "users" && <UserManagementComponent />}
-            {currentView === "settings" && <SettingsComponent />}
           </motion.div>
         </AnimatePresence>
       </div>

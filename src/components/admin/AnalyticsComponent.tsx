@@ -110,7 +110,7 @@ export const AnalyticsComponent = ({
   return (
     <div className="space-y-8">
       {/* Key Performance Indicators */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <GlassCard className="bg-gradient-to-br from-blue-500/20 to-blue-600/20">
           <div className="flex items-center justify-between">
             <div>
@@ -141,31 +141,6 @@ export const AnalyticsComponent = ({
           </div>
         </GlassCard>
 
-        <GlassCard className="bg-gradient-to-br from-green-500/20 to-green-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">
-                Avg Service Efficiency
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {analytics.averageServiceTime > 0
-                  ? Math.round(
-                      (analytics.averageServiceTime /
-                        (analytics.averageWaitTime +
-                          analytics.averageServiceTime)) *
-                        100
-                    )
-                  : 0}
-                %
-              </p>
-              <p className="text-xs text-green-300 mt-1">
-                Service vs Total Time
-              </p>
-            </div>
-            <FiTrendingUp className="w-12 h-12 text-green-400/60" />
-          </div>
-        </GlassCard>
-
         <GlassCard className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20">
           <div className="flex items-center justify-between">
             <div>
@@ -182,29 +157,10 @@ export const AnalyticsComponent = ({
             <FiClock className="w-12 h-12 text-yellow-400/60" />
           </div>
         </GlassCard>
-
-        <GlassCard className="bg-gradient-to-br from-purple-500/20 to-purple-600/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-white/80">
-                Customer Satisfaction
-              </h3>
-              <p className="text-3xl font-bold text-white">
-                {analytics.averageWaitTime <= 10
-                  ? "😊"
-                  : analytics.averageWaitTime <= 20
-                  ? "😐"
-                  : "😟"}
-              </p>
-              <p className="text-xs text-purple-300 mt-1">Based on wait time</p>
-            </div>
-            <FiBarChart className="w-12 h-12 text-purple-400/60" />
-          </div>
-        </GlassCard>
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Row 1 - Full Width Charts */}
+      <div className="space-y-6">
         {/* Daily Trends */}
         <GlassCard>
           <h3 className="text-lg font-semibold text-white mb-4">
@@ -284,7 +240,7 @@ export const AnalyticsComponent = ({
         </GlassCard>
       </div>
 
-      {/* Charts Row 2 */}
+      {/* Charts Row 2 - Three Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Desk Utilization */}
         <GlassCard>
@@ -369,96 +325,6 @@ export const AnalyticsComponent = ({
                 <Bar dataKey="count" fill="#06B6D4" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* Insights and Recommendations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard>
-          <h3 className="text-lg font-semibold text-white mb-4">
-            🔍 Key Insights
-          </h3>
-          <div className="space-y-3">
-            <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <p className="text-blue-300 text-sm font-medium">
-                Peak Performance
-              </p>
-              <p className="text-white text-sm">
-                Your busiest hour is {analytics.peakHours[0]?.hour || "N/A"}{" "}
-                with {analytics.peakHours[0]?.count || 0} customers served
-              </p>
-            </div>
-            <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-              <p className="text-green-300 text-sm font-medium">
-                Efficiency Rating
-              </p>
-              <p className="text-white text-sm">
-                {analytics.averageWaitTime <= 10
-                  ? "Excellent! Your average wait time is under 10 minutes."
-                  : analytics.averageWaitTime <= 20
-                  ? "Good performance with room for improvement in wait times."
-                  : "Consider optimizing processes to reduce wait times."}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <p className="text-purple-300 text-sm font-medium">
-                Desk Balance
-              </p>
-              <p className="text-white text-sm">
-                {Math.abs(
-                  analytics.jobsByDesk.desk1 - analytics.jobsByDesk.desk2
-                ) <=
-                analytics.totalJobs * 0.1
-                  ? "Well balanced workload between both desks."
-                  : `Desk ${
-                      analytics.jobsByDesk.desk1 > analytics.jobsByDesk.desk2
-                        ? "1"
-                        : "2"
-                    } is handling more traffic. Consider load balancing.`}
-              </p>
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard>
-          <h3 className="text-lg font-semibold text-white mb-4">
-            📈 Recommendations
-          </h3>
-          <div className="space-y-3">
-            <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              <p className="text-yellow-300 text-sm font-medium">
-                Staffing Optimization
-              </p>
-              <p className="text-white text-sm">
-                {analytics.peakHours.length > 0
-                  ? `Schedule more staff during ${analytics.peakHours
-                      .slice(0, 2)
-                      .map((p) => p.hour)
-                      .join(" and ")} for better coverage.`
-                  : "Monitor traffic patterns to optimize staffing schedules."}
-              </p>
-            </div>
-            <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-              <p className="text-red-300 text-sm font-medium">
-                Wait Time Improvement
-              </p>
-              <p className="text-white text-sm">
-                {analytics.averageWaitTime > 15
-                  ? "Consider implementing a digital queue system or appointment booking to reduce wait times."
-                  : "Maintain current service levels to keep customers satisfied."}
-              </p>
-            </div>
-            <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-              <p className="text-cyan-300 text-sm font-medium">
-                Process Enhancement
-              </p>
-              <p className="text-white text-sm">
-                {analytics.averageServiceTime > 10
-                  ? "Review service procedures to identify bottlenecks and streamline operations."
-                  : "Excellent service time! Consider this as a best practice model."}
-              </p>
-            </div>
           </div>
         </GlassCard>
       </div>

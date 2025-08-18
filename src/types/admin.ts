@@ -30,10 +30,4 @@ export type DateRange = {
   end: string;
 };
 
-export type ViewMode =
-  | "overview"
-  | "queue"
-  | "analytics"
-  | "history"
-  | "users"
-  | "settings";
+export type ViewMode = "overview" | "queue" | "analytics" | "history" | "users";
